@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostCard } from '@/components/PostCard';
 import { CommentList } from '@/components/CommentList';
-import * as postsApi from '@/api/posts.api';
+import * as postsService from '@/services/posts';
 import { ApiError } from '@/lib/api-error';
 import type { PostDTO } from '@/types/api';
 
@@ -17,7 +17,7 @@ export function PostPage() {
 
   useEffect(() => {
     if (!id) return;
-    postsApi
+    postsService
       .getPost(id)
       .then(setPost)
       .catch((err) => {

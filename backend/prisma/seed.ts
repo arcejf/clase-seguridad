@@ -1,6 +1,6 @@
-// Datos de prueba para la demo en clase (contraseñas predecibles a propósito,
-// documentadas en el README). Igual pasan por hashPassword(): ni en un seed
-// de ejemplo se guarda una contraseña en texto plano.
+// Estos son datos de prueba para la demo (usamos una contraseña predecible a
+// propósito, documentada en el README). Igual la pasamos por hashPassword():
+// ni en un seed de ejemplo se guarda una contraseña en texto plano.
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '../lib/password';
 
@@ -49,7 +49,7 @@ async function main() {
     }),
   ]);
 
-  // Si ya había datos de una corrida anterior, no duplicar posts.
+  // Si ya hay datos de una corrida anterior, no volvemos a crear posts.
   const existingPosts = await prisma.post.count();
   if (existingPosts > 0) {
     console.log('Ya hay posts en la base, se omite crear contenido de ejemplo.');

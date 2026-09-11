@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-// Los ids son cuid() de Prisma: strings, no numéricos. Igual se validan acá
-// (no confiar nunca en un :param de la URL sin pasarlo por un schema).
+// Los ids son cuid() de Prisma, o sea strings, no números. Aun así los
+// validamos acá: nunca confiamos en un :param de la URL sin pasarlo antes por
+// un schema.
 export const idParamSchema = z.object({
   id: z.string().min(1),
 });

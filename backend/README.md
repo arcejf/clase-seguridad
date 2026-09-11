@@ -1,10 +1,11 @@
 # Backend, red social mínima (proyecto didáctico de seguridad)
 
-API de una red social muy simple (usuarios, posts, comentarios, likes) pensada como
-material de clase. La funcionalidad es a propósito básica: lo que importa es que cada
-parte del código muestre una **buena práctica de seguridad** concreta: hashing de
-contraseñas, JWT bien usado, CORS, variables de entorno, validación de input y
-autorización. Los comentarios en el código explican el por qué de cada decisión.
+Acá armamos la API de una red social muy simple (usuarios, posts, comentarios, likes)
+pensada como material de clase. La funcionalidad es a propósito básica: lo que importa
+es que cada parte del código muestre una **buena práctica de seguridad** concreta:
+hashing de contraseñas, JWT bien usado, CORS, variables de entorno, validación de
+input y autorización. En los comentarios del código explicamos el por qué de cada
+decisión, no solo el qué.
 
 ## Arranque rápido
 
@@ -35,32 +36,33 @@ El seed (`prisma/seed.ts`) crea tres usuarios con la misma contraseña:
 Tienen posts, comentarios cruzados y likes ya cargados: alcanza para probar todo el
 flujo (incluida la protección anti-IDOR) sin tener que registrar usuarios a mano.
 
-> Sí, la contraseña está hardcodeada y documentada acá arriba a propósito: es un
-> proyecto de ejemplo para mostrar en clase, no un sistema real. Igual pasa por
-> `hashPassword()` como cualquier otra: nunca se guarda en texto plano ni siquiera en
+> Sí, dejamos la contraseña hardcodeada y documentada acá arriba a propósito: es un
+> proyecto de ejemplo para la clase, no un sistema real. Igual pasa por
+> `hashPassword()` como cualquier otra: nunca se guarda en texto plano, ni siquiera en
 > el seed.
 
 ## Por qué SQLite (y por qué el .env se genera solo)
 
 Este proyecto se sube a GitHub y otra persona lo va a correr en su propia PC. Para que
-funcione idéntico en ambas máquinas sin coordinar nada:
+funcione igual en cualquier máquina sin tener que coordinar nada, decidimos lo siguiente:
 
-- La base es SQLite: un archivo local, sin servidor de base de datos que instalar.
+- Usamos SQLite: un archivo local, sin servidor de base de datos que instalar.
   Las migraciones (`prisma/migrations/`) sí se commitean al repo, así que
   `npm run setup` reconstruye exactamente el mismo esquema en cualquier máquina. El
   archivo `.db` en sí no se commitea (está en `.gitignore`): es generado, no
   versionado, igual que `node_modules`.
-- El `.env` real nunca se commitea (contiene secretos). Lo que sí va al repo es
+- El `.env` real nunca se commitea, porque contiene secretos. Lo que sí va al repo es
   `.env.example`, que documenta qué variables existen. `npm run setup` copia ese
-  template a `.env` y le genera un `JWT_SECRET` aleatorio nuevo con `crypto.randomBytes`:
-  cada instalación tiene su propio secreto, generado localmente, nunca compartido.
+  template a `.env` y genera un `JWT_SECRET` aleatorio nuevo con `crypto.randomBytes`:
+  así cada instalación tiene su propio secreto, generado localmente, nunca compartido.
 
 ## Variables de entorno
 
-Ver [`.env.example`](./.env.example): cada variable está comentada ahí mismo. La más
-importante para la clase es `JWT_SECRET`: si falta o es demasiado corto, el servidor
+Cada variable está comentada en [`.env.example`](./.env.example). La más importante
+para la clase es `JWT_SECRET`: si falta o es demasiado corto, el servidor directamente
 no arranca (`config/env.ts` valida todo `process.env` con Zod antes de levantar nada).
-Un default silencioso e inseguro es peor que un crash explícito al arrancar.
+Preferimos esto a un default silencioso e inseguro, que es peor que un crash explícito
+al arrancar.
 
 `GOOGLE_CLIENT_ID` es la única variable opcional: sin ella, todo el resto de la API
 (incluido el login por contraseña) sigue funcionando igual; solo queda desactivado
@@ -83,10 +85,10 @@ backend/
   scripts/             # setup.ts y db-reset.ts
 ```
 
-La regla de las capas: el controller nunca importa Prisma directamente, el service nunca
-toca `req`/`res`. Así la lógica de negocio (incluida la autorización) es la misma sin
-importar desde qué ruta se llegue a ella, y se puede testear sin levantar un servidor
-HTTP.
+La regla que seguimos con las capas: el controller nunca importa Prisma directamente,
+y el service nunca toca `req`/`res`. Así la lógica de negocio (incluida la autorización)
+es la misma sin importar desde qué ruta se llegue a ella, y se puede testear sin
+levantar un servidor HTTP.
 
 ## Endpoints
 
@@ -121,11 +123,12 @@ el botón oficial de Google Identity Services del lado del frontend, y hace lo m
 que un login por contraseña: emite un access token y una cookie de refresh.
 
 Lo importante para la clase está en `services/auth.service.ts` (`loginWithGoogle`):
-`google-auth-library` verifica la firma del token contra las claves públicas de
-Google, que no haya expirado, y que el `audience` coincida con nuestro propio
-`GOOGLE_CLIENT_ID`. Sin ese último chequeo, cualquier ID token válido emitido para
-otra aplicación de Google también sería aceptado acá. Nunca hay que confiar en el
-payload de un JWT ajeno sin pasar primero por esa verificación.
+usamos `google-auth-library` para verificar la firma del token contra las claves
+públicas de Google, que no haya expirado, y que el `audience` coincida con nuestro
+propio `GOOGLE_CLIENT_ID`. Si nos salteáramos ese último chequeo, cualquier ID token
+válido emitido para otra aplicación de Google también sería aceptado acá. La lección
+general es esta: nunca hay que confiar en el payload de un JWT ajeno sin pasar primero
+por esa verificación.
 
 Para probarlo hace falta una credencial OAuth 2.0 de tipo "Aplicación web" en
 [Google Cloud Console](https://console.cloud.google.com/apis/credentials), con
@@ -195,7 +198,7 @@ Para probarlo hace falta una credencial OAuth 2.0 de tipo "Aplicación web" en
 
 ## Recorrido con curl (para la demo en clase)
 
-Con el server corriendo en `:3000`:
+Con el server corriendo en `:3000`, así se puede probar cada defensa a mano:
 
 ```bash
 # Registro
@@ -245,7 +248,7 @@ Para inspeccionar la base y confirmar que `passwordHash` nunca tiene texto plano
 npx prisma studio
 ```
 
-## Ideas para seguir sumando (fuera de alcance de esta primera versión)
+## Ideas para seguir sumando (quedan fuera de esta primera versión)
 
 - **2FA** (TOTP) como capa extra sobre el login.
 - **Verificación de email** al registrarse por contraseña.
@@ -257,7 +260,8 @@ npx prisma studio
 
 ## Nota sobre `npm audit`
 
-`npm audit` puede reportar una vulnerabilidad "high" en `deepmerge-ts`, una dependencia
-transitiva de la propia herramienta de línea de comandos `prisma` (usada solo en
-desarrollo, para migraciones y generación de código). No afecta a `@prisma/client`, que
-es lo que corre en el servidor: no es explotable en el flujo de esta app.
+Puede que `npm audit` reporte una vulnerabilidad "high" en `deepmerge-ts`, una
+dependencia transitiva de la propia herramienta de línea de comandos `prisma` (que se
+usa solo en desarrollo, para migraciones y generación de código). No afecta a
+`@prisma/client`, que es lo que corre en el servidor, así que no es explotable en el
+flujo de esta app.

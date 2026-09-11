@@ -32,8 +32,8 @@ export async function deleteComment(commentId: string, requesterId: string): Pro
   });
   if (!comment) throw new NotFoundError('Comentario no encontrado');
 
-  // Mismo chequeo de ownership que en post.service.ts, con una regla extra:
-  // puede borrar tanto quien escribió el comentario como el autor del post.
+  // Acá agregamos una regla más que en post.service.ts: dejamos borrar el
+  // comentario tanto a quien lo escribió como al dueño del post donde está.
   const isCommentAuthor = comment.authorId === requesterId;
   const isPostAuthor = comment.post.authorId === requesterId;
   if (!isCommentAuthor && !isPostAuthor) {

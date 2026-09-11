@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import * as usersApi from '@/api/users.api';
+import * as usersService from '@/services/users';
 import { ApiError } from '@/lib/api-error';
 import type { PublicUser } from '@/types/api';
 
@@ -14,7 +14,7 @@ export function ProfilePage() {
 
   useEffect(() => {
     if (!username) return;
-    usersApi
+    usersService
       .getPublicProfile(username)
       .then(setProfile)
       .catch((err) => {

@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
 
-// Singleton del cliente de Prisma: una sola conexión reutilizada en toda la
-// app, en vez de instanciar un PrismaClient por request.
+// Usamos un solo cliente de Prisma para toda la app, no uno nuevo por request.
 export const prisma = new PrismaClient();

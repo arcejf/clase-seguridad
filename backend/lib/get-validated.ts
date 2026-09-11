@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 
-// Lee lo que middlewares/validate.ts dejó en req.validated, ya tipado.
-// Solo se usa en controllers, siempre después de aplicar validate(schema).
+// Esto lee lo que middlewares/validate.ts ya dejó en req.validated, tipado.
+// Se usa solo en los controllers, siempre después de pasar por validate(schema).
 export function getValidated<T>(req: Request, target: 'body' | 'query' | 'params'): T {
   return req.validated?.[target] as T;
 }

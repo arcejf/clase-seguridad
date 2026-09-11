@@ -31,7 +31,7 @@ async function issueTokens(user: { id: string; email: string; displayName: strin
   const refreshToken = generateRefreshToken();
   const refreshTokenExpiresAt = new Date(Date.now() + parseExpiresInToMs(env.JWT_REFRESH_EXPIRES_IN));
 
-  // Se guarda el HASH del refresh token, nunca el valor en claro (ver lib/tokens.ts).
+  // Guardamos el hash del refresh token, nunca el valor en claro (ver lib/tokens.ts).
   await prisma.refreshToken.create({
     data: {
       tokenHash: hashRefreshToken(refreshToken),
@@ -53,7 +53,7 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
     );
   }
 
-  // Hashear ANTES de guardar: el texto plano nunca toca la base de datos.
+  // Hasheamos antes de guardar, así el texto plano nunca toca la base de datos.
   const passwordHash = await hashPassword(input.password);
 
   const user = await prisma.user.create({
@@ -65,7 +65,6 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
     },
   });
 
-  // Aca se genera el access token y refresh token, se guarda el hash del refresh token en BD y se devuelve todo al controller para que lo mande al cliente.
   const tokens = await issueTokens(user);
   return { user: toAuthenticatedUser(user), ...tokens };
 }
@@ -84,8 +83,9 @@ export async function login(input: LoginInput): Promise<AuthResult> {
   return { user: toAuthenticatedUser(user), ...tokens };
 }
 
-// Hash de bcrypt válido (de una contraseña que nadie usa) para que
-// bcrypt.compare tenga el mismo costo cuando el usuario no existe.
+// Este es un hash de bcrypt válido de una contraseña que no usa nadie. Lo
+// usamos para que bcrypt.compare tarde lo mismo aunque el usuario ni siquiera
+// exista, y así no delatar por el tiempo de respuesta si un email está registrado.
 const DUMMY_HASH_FOR_TIMING = '$2b$12$1Uh9BsrhDzktXsmkLZlB5ejomBEVoHbEtFvty.pDh4PDs2T7nU0F.';
 
 export async function refresh(rawRefreshToken: string): Promise<AuthResult> {
@@ -99,12 +99,13 @@ export async function refresh(rawRefreshToken: string): Promise<AuthResult> {
   const isValid = stored && !stored.revokedAt && stored.expiresAt > new Date();
 
   if (!stored || !isValid) {
-    // Reuse detection: un refresh token ya usado/revocado sugiere robo (el dueño
-    // legítimo ya lo rotó). Idealmente acá se revocarían todos los tokens del usuario.
+    // Si llega un refresh token ya usado o revocado, es una señal de que puede
+    // haber sido robado (el dueño legítimo ya lo rotó). Lo ideal en ese caso
+    // sería revocar todos los tokens de ese usuario, no solo este.
     throw new UnauthorizedError('Refresh token inválido o expirado');
   }
 
-  // Rotación: se revoca ANTES de emitir uno nuevo, es de un solo uso.
+  // Lo revocamos antes de emitir uno nuevo: cada refresh token sirve una sola vez.
   await prisma.refreshToken.update({
     where: { id: stored.id },
     data: { revokedAt: new Date() },
@@ -116,8 +117,9 @@ export async function refresh(rawRefreshToken: string): Promise<AuthResult> {
 
 const googleClient = env.GOOGLE_CLIENT_ID ? new OAuth2Client(env.GOOGLE_CLIENT_ID) : null;
 
-// Genera un username a partir de la parte local del email, con sufijo numérico
-// si ya existe (este flujo no pasa por registerSchema, así que no lo elige el usuario).
+// Armamos un username a partir de la parte local del email, con un sufijo
+// numérico si ya existe. Este flujo no pasa por registerSchema, así que la
+// persona no lo elige.
 async function uniqueUsernameFromEmail(email: string): Promise<string> {
   const base = email
     .split('@')[0]
@@ -139,8 +141,9 @@ export async function loginWithGoogle(rawIdToken: string): Promise<AuthResult> {
     throw new UnauthorizedError('El login con Google no está configurado en este servidor');
   }
 
-  // La librería verifica la firma, expiración y que "aud" coincida con nuestro
-  // client ID; sin esto último, un token válido para OTRA app de Google colaría.
+  // La librería se encarga de verificar la firma, que no haya expirado, y que el
+  // "aud" coincida con nuestro client ID. Sin este último chequeo, cualquier token
+  // válido de OTRA app de Google también pasaría acá.
   let payload;
   try {
     const ticket = await googleClient.verifyIdToken({
@@ -164,8 +167,8 @@ export async function loginWithGoogle(rawIdToken: string): Promise<AuthResult> {
   let user = await prisma.user.findUnique({ where: { googleId: payload.sub } });
 
   if (!user) {
-    // Puede que ya exista una cuenta con ese email creada por contraseña:
-    // en ese caso vinculamos el googleId en vez de crear un duplicado.
+    // Puede que ya haya una cuenta con ese email creada por contraseña. En ese
+    // caso vinculamos el googleId a esa cuenta en vez de crear una duplicada.
     const existingByEmail = await prisma.user.findUnique({ where: { email } });
     if (existingByEmail) {
       user = await prisma.user.update({
@@ -192,7 +195,8 @@ export async function loginWithGoogle(rawIdToken: string): Promise<AuthResult> {
 
 export async function logout(rawRefreshToken: string): Promise<void> {
   const tokenHash = hashRefreshToken(rawRefreshToken);
-  // Revocación real en BD, algo que un JWT sin estado no puede hacer solo.
+  // Esto es revocación de verdad, guardada en la base, algo que un JWT por sí
+  // solo no puede lograr.
   await prisma.refreshToken.updateMany({
     where: { tokenHash, revokedAt: null },
     data: { revokedAt: new Date() },

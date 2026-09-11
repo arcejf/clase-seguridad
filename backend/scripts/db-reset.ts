@@ -1,6 +1,6 @@
-// Borra la base SQLite local para dejar la demo limpia entre clases.
-// `npm run db:reset` corre esto y después vuelve a llamar a `npm run setup`
-// (que recrea la BD, corre las migraciones y carga el seed).
+// Esto borra la base SQLite local para arrancar de cero. `npm run db:reset`
+// corre este script y después llama a `npm run setup`, que recrea la BD,
+// aplica las migraciones y carga el seed de nuevo.
 import fs from 'node:fs';
 import path from 'node:path';
 

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostComposer } from '@/components/PostComposer';
 import { PostCard } from '@/components/PostCard';
-import * as postsApi from '@/api/posts.api';
+import * as postsService from '@/services/posts';
 import { ApiError } from '@/lib/api-error';
 import type { PostDTO } from '@/types/api';
 
@@ -33,7 +33,7 @@ export function FeedPage() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    postsApi
+    postsService
       .listPosts()
       .then((res) => {
         setPosts(res.posts);
@@ -46,7 +46,7 @@ export function FeedPage() {
     if (!nextCursor) return;
     setLoadingMore(true);
     try {
-      const res = await postsApi.listPosts(nextCursor);
+      const res = await postsService.listPosts(nextCursor);
       setPosts((prev) => [...(prev ?? []), ...res.posts]);
       setNextCursor(res.nextCursor);
     } catch (err) {

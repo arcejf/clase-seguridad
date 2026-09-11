@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/auth/use-auth';
-import { apiFetchRaw } from '@/lib/api-client';
-import * as postsApi from '@/api/posts.api';
+import { apiFetchResponse } from '@/lib/api-client';
+import * as postsService from '@/services/posts';
 
 // Esta página le pega a la API DIRECTO, salteándose a propósito los helpers
 // normales, para mostrar que lo único que autoriza o rechaza es el backend.
@@ -109,20 +109,20 @@ export function SecurityDemoPage() {
   const [massAssignmentResult, setMassAssignmentResult] = useState<RawResult | string | null>(null);
 
   async function runNoToken() {
-    const response = await apiFetchRaw('/api/auth/me', { credentials: 'omit' });
+    const response = await apiFetchResponse('/api/auth/me', { credentials: 'omit' });
     setNoTokenResult(await toRawResult(response));
   }
 
   async function runIdor() {
     setIdorResult('Buscando un post que no sea tuyo...');
     try {
-      const { posts } = await postsApi.listPosts();
+      const { posts } = await postsService.listPosts();
       const foreignPost = posts.find((p) => p.author.id !== user?.id);
       if (!foreignPost) {
         setIdorResult('No encontré ningún post ajeno en el feed para probar esto. Publicá uno con otro usuario primero.');
         return;
       }
-      const response = await apiFetchRaw(`/api/posts/${foreignPost.id}`, { method: 'DELETE' });
+      const response = await apiFetchResponse(`/api/posts/${foreignPost.id}`, { method: 'DELETE' });
       setIdorResult(await toRawResult(response));
     } catch {
       setIdorResult('No se pudo cargar el feed para buscar un post ajeno.');
@@ -130,7 +130,7 @@ export function SecurityDemoPage() {
   }
 
   async function runForceRefresh() {
-    const response = await apiFetchRaw('/api/auth/refresh', { method: 'POST', skipAuth: true });
+    const response = await apiFetchResponse('/api/auth/refresh', { method: 'POST', skipAuth: true });
     const raw = await toRawResult(response);
     setRefreshResult(raw);
     if (response.ok) {
@@ -146,7 +146,7 @@ export function SecurityDemoPage() {
     const attempts: string[] = [];
     let lastResponse: Response | null = null;
     for (let i = 1; i <= 6; i++) {
-      const response = await apiFetchRaw('/api/auth/login', {
+      const response = await apiFetchResponse('/api/auth/login', {
         method: 'POST',
         skipAuth: true,
         body: { email: 'nadie-existe@example.com', password: 'contraseña-incorrecta' },
@@ -164,7 +164,7 @@ export function SecurityDemoPage() {
 
   async function runMassAssignment() {
     const suffix = Date.now();
-    const response = await apiFetchRaw('/api/auth/register', {
+    const response = await apiFetchResponse('/api/auth/register', {
       method: 'POST',
       skipAuth: true,
       body: {
@@ -270,7 +270,7 @@ export function SecurityDemoPage() {
       <DemoCard
         title="4. Forzar un refresh"
         description="Llama a /api/auth/refresh con la cookie httpOnly. Se emite un access token nuevo (no se puede mostrar su valor acá, es HttpOnly) y el refresh token usado queda revocado (probá forzarlo dos veces con el mismo token viejo y vas a ver un 401)."
-        defense="backend/services/auth.service.ts: rotación y revocación"
+        defense="backend/services/auth.ts: rotación y revocación"
         onRun={runForceRefresh}
         result={refreshResult}
       />

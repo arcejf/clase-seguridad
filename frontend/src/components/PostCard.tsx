@@ -6,7 +6,7 @@ import { useAuth } from '@/auth/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import * as postsApi from '@/api/posts.api';
+import * as postsService from '@/services/posts';
 import { ApiError } from '@/lib/api-error';
 import type { PostDTO } from '@/types/api';
 
@@ -41,7 +41,7 @@ export function PostCard({ post, linkToDetail = true, onDeleted }: PostCardProps
     if (busy) return;
     setBusy(true);
     try {
-      const result = liked ? await postsApi.unlikePost(post.id) : await postsApi.likePost(post.id);
+      const result = liked ? await postsService.unlikePost(post.id) : await postsService.likePost(post.id);
       setLiked(!liked);
       setLikeCount(result.likeCount);
     } catch (err) {
@@ -55,7 +55,7 @@ export function PostCard({ post, linkToDetail = true, onDeleted }: PostCardProps
     if (busy) return;
     setBusy(true);
     try {
-      await postsApi.deletePost(post.id);
+      await postsService.deletePost(post.id);
       toast.success('Post borrado');
       onDeleted?.(post.id);
     } catch (err) {

@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import * as postsApi from '@/api/posts.api';
+import * as postsService from '@/services/posts';
 import { ApiError } from '@/lib/api-error';
-import { createCommentSchema, type CreateCommentInput } from '@/schemas/post.schemas';
+import { createCommentSchema, type CreateCommentInput } from '@/schemas/post';
 import type { CommentDTO } from '@/types/api';
 
 export function CommentList({ postId, postAuthorId }: { postId: string; postAuthorId: string }) {
@@ -26,7 +26,7 @@ export function CommentList({ postId, postAuthorId }: { postId: string; postAuth
   const content = form.watch('content');
 
   useEffect(() => {
-    postsApi
+    postsService
       .listComments(postId)
       .then(setComments)
       .catch(() => setComments([]));
@@ -34,7 +34,7 @@ export function CommentList({ postId, postAuthorId }: { postId: string; postAuth
 
   async function onSubmit(input: CreateCommentInput) {
     try {
-      const comment = await postsApi.createComment(postId, input);
+      const comment = await postsService.createComment(postId, input);
       setComments((prev) => [...(prev ?? []), comment]);
       form.reset();
     } catch (err) {
@@ -44,7 +44,7 @@ export function CommentList({ postId, postAuthorId }: { postId: string; postAuth
 
   async function handleDelete(commentId: string) {
     try {
-      await postsApi.deleteComment(commentId);
+      await postsService.deleteComment(commentId);
       setComments((prev) => prev?.filter((c) => c.id !== commentId) ?? null);
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : 'No se pudo borrar el comentario');

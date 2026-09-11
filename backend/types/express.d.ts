@@ -1,14 +1,14 @@
-// Extiende el tipo Request de Express con los campos que agregan nuestros
-// middlewares, para tener autocompletado/chequeo de tipos en los controllers
-// en vez de castear `req as any` en todos lados.
+// Extendemos el Request de Express con los campos que agregan nuestros
+// middlewares, así tenemos autocompletado y chequeo de tipos en los
+// controllers en vez de andar casteando `req as any` en todos lados.
 import 'express';
 
 declare global {
   namespace Express {
     interface Request {
-      // Seteado por middlewares/require-auth.ts tras verificar el JWT.
+      // Se setea en middlewares/require-auth.ts después de verificar el JWT.
       user?: { id: string };
-      // Seteado por middlewares/validate.ts con el resultado ya parseado por Zod.
+      // Se setea en middlewares/validate.ts con lo que ya parseó Zod.
       validated?: {
         body?: unknown;
         query?: unknown;

@@ -6,8 +6,9 @@ export const createPostSchema = z.object({
   content: z.string().trim().min(1, 'El post no puede estar vacío').max(280, 'Máximo 280 caracteres'),
 });
 
-// Tope máximo de paginación: sin esto, `?limit=1000000` fuerza al server a
-// traer todo el dataset en una query, un vector de DoS barato.
+// Le ponemos un tope al limit de paginación: sin esto, alguien podría pedir
+// `?limit=1000000` y forzar al servidor a traer toda la tabla de una, un DoS
+// bastante fácil de hacer.
 const MAX_PAGE_SIZE = 50;
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -35,8 +36,8 @@ type PostWithRelations = Post & {
   likes?: { userId: string }[];
 };
 
-// Mismo criterio whitelist que en user.ts: el autor pasa por toPublicUser()
-// antes de exponerse, para que no salga un passwordHash de arrastre.
+// Usamos el mismo criterio que en user.ts: el autor pasa por toPublicUser()
+// antes de devolverse, para que no se filtre el passwordHash sin querer.
 export function toPostDTO(post: PostWithRelations, currentUserId?: string): PostDTO {
   return {
     id: post.id,

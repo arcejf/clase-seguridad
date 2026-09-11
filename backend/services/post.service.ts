@@ -51,9 +51,9 @@ export async function deletePost(postId: string, requesterId: string): Promise<v
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post) throw new NotFoundError('Post no encontrado');
 
-  // Autorización ≠ autenticación: requireAuth ya confirmó QUIÉN hace el request,
-  // esto confirma que ESE usuario puede actuar sobre ESTE recurso. Sin este
-  // chequeo, cualquiera podría borrar posts ajenos adivinando ids (IDOR).
+  // requireAuth ya sabe QUIÉN hace el request, pero eso no alcanza: acá
+  // chequeamos que sea el dueño del post. Si nos salteáramos esto, cualquiera
+  // podría borrar posts ajenos con solo adivinar el id (esto es un IDOR).
   if (post.authorId !== requesterId) {
     throw new ForbiddenError('No podés borrar un post que no es tuyo');
   }
@@ -61,11 +61,12 @@ export async function deletePost(postId: string, requesterId: string): Promise<v
   await prisma.post.delete({ where: { id: postId } });
 }
 
-// Ejemplo de lo que NUNCA hay que hacer: SQL por concatenación de strings.
-// Prisma ya parametriza queries (`content: { contains: q }`) sin necesitar esto.
+// Dejamos esto comentado como ejemplo de lo que nunca hay que hacer. Con
+// Prisma ni hace falta pensarlo: ya parametriza las queries solo
+// (`content: { contains: q }`).
 //
 // async function searchPostsUNSAFE(q: string) {
-//   // NUNCA HACER ESTO: `q` viene del usuario tal cual, sin escapar.
-//   // Un input como `' OR '1'='1` rompe la query por completo.
+//   // acá `q` viene del usuario tal cual, sin escapar nada.
+//   // con un input como `' OR '1'='1` se rompe la query entera.
 //   return prisma.$queryRawUnsafe(`SELECT * FROM posts WHERE content LIKE '%${q}%'`);
 // }

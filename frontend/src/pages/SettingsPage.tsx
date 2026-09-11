@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import * as usersApi from '@/api/users.api';
+import * as usersService from '@/services/users';
 import { ApiError } from '@/lib/api-error';
-import { updateProfileSchema, type UpdateProfileInput } from '@/schemas/auth.schemas';
+import { updateProfileSchema, type UpdateProfileInput } from '@/schemas/auth';
 
 export function SettingsPage() {
   const { user, setUser } = useAuth();
@@ -21,7 +21,7 @@ export function SettingsPage() {
 
   async function onSubmit(input: UpdateProfileInput) {
     try {
-      const updated = await usersApi.updateProfile(input);
+      const updated = await usersService.updateProfile(input);
       setUser(updated);
       toast.success('Perfil actualizado');
     } catch (err) {
@@ -35,7 +35,7 @@ export function SettingsPage() {
         <CardTitle>Ajustes de perfil</CardTitle>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <CardContent className="flex flex-col gap-4">
             <FormField
               control={form.control}

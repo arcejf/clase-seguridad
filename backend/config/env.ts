@@ -18,6 +18,8 @@ const envSchema = z.object({
     .min(32, 'JWT_SECRET debe tener al menos 32 caracteres (correr `npm run setup` genera uno válido)'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
+  JWT_ISSUER: z.string().default('localhost:3000'),
+  JWT_AUDIENCE: z.string().default('localhost:5173'),
 
   // Defaults = valores estrictos de producción; subirlos solo por env var, nunca
   // hardcodeando en el código, para que una excepción de demo quede explícita.

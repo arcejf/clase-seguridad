@@ -4,9 +4,9 @@ import { BadRequestError } from '../lib/http-errors';
 
 type Target = 'body' | 'query' | 'params';
 
-// Middleware genérico: todo body/query/params se valida con Zod antes de llegar
-// a un controller, nunca se confía en el shape de un request. Zod además
-// reemplaza req[target] por el dato ya parseado/normalizado y sin campos extra.
+// Este middleware genérico valida body/query/params con Zod antes de llegar a
+// un controller; nunca confiamos en la forma de un request tal como llega. Zod
+// además devuelve el dato ya normalizado y sin los campos que no declaramos.
 export function validate(schema: ZodType, target: Target = 'body') {
   return (req: Request, _res: Response, next: NextFunction) => {
     const result = schema.safeParse(req[target]);
@@ -14,8 +14,8 @@ export function validate(schema: ZodType, target: Target = 'body') {
       const message = result.error.issues.map((issue) => `${issue.path.join('.') || target}: ${issue.message}`).join('; ');
       return next(new BadRequestError(message));
     }
-    // req.query es getter-only en Express 5; por eso se guarda en req.validated
-    // en vez de reasignar req[target] (ver types/express.d.ts).
+    // req.query es getter-only en Express 5, así que guardamos el resultado en
+    // req.validated en vez de reasignar req[target] (ver types/express.d.ts).
     req.validated = { ...req.validated, [target]: result.data };
     next();
   };

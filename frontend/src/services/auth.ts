@@ -1,6 +1,6 @@
 import { apiRequest } from '@/lib/api-client';
 import type { AuthResponse, AuthenticatedUser } from '@/types/api';
-import type { LoginInput } from '@/schemas/auth.schemas';
+import type { LoginInput } from '@/schemas/auth';
 
 export interface RegisterPayload {
   email: string;
@@ -22,7 +22,7 @@ export function loginWithGoogle(credential: string): Promise<AuthResponse> {
 }
 
 // No hay un `refresh()` acá a propósito: /api/auth/refresh siempre se llama
-// vía refreshSession() en lib/api-client.ts (single-flight), nunca directo.
+// vía refreshAccessToken() en lib/api-client.ts (single-flight), nunca directo.
 
 export function logout(): Promise<void> {
   return apiRequest<void>('/api/auth/logout', { method: 'POST', skipRefreshRetry: true });

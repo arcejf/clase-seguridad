@@ -9,7 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { ApiError } from '@/lib/api-error';
-import { registerSchema, type RegisterInput } from '@/schemas/auth.schemas';
+import { registerSchema, type RegisterInput } from '@/schemas/auth';
 
 export function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();

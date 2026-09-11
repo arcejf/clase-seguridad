@@ -1,6 +1,6 @@
 import { apiRequest } from '@/lib/api-client';
 import type { CommentDTO, ListPostsResponse, PostDTO } from '@/types/api';
-import type { CreateCommentInput, CreatePostInput } from '@/schemas/post.schemas';
+import type { CreateCommentInput, CreatePostInput } from '@/schemas/post';
 
 export function listPosts(cursor?: string): Promise<ListPostsResponse> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';

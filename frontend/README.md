@@ -1,10 +1,10 @@
 # Frontend, red social mínima (proyecto didáctico de seguridad)
 
-Cliente React de [`backend/`](../backend): login, registro, feed, posts, comentarios,
-likes, y una ruta `/seguridad` que hace de panel de demo: le pega directo a la API para
-mostrar en vivo, con la respuesta HTTP cruda en pantalla, cada defensa que tiene el
-backend. Como en el backend, los comentarios en el código explican el por qué de cada
-decisión.
+Este es el cliente React de [`backend/`](../backend): login, registro, feed, posts,
+comentarios, likes, y una ruta `/seguridad` que armamos como panel de demo: le pega
+directo a la API para mostrar en vivo, con la respuesta HTTP cruda en pantalla, cada
+defensa que tiene el backend. Como en el backend, en los comentarios del código
+explicamos el por qué de cada decisión.
 
 ## Arranque rápido
 
@@ -40,27 +40,27 @@ simplemente no se dibuja y el login por contraseña sigue funcionando igual.
 
 ## Las cuatro piezas que sostienen la sesión
 
-1. **`lib/token-store.ts`**: el access token vive en una variable de módulo, en
-   memoria. Nunca `localStorage`. No es inmunidad a XSS (un script que corre en la
-   página puede leer cualquier variable), pero reduce el daño: no persiste entre
+1. **`lib/token-store.ts`**: guardamos el access token en una variable de módulo, en
+   memoria, nunca en `localStorage`. Esto no es inmunidad a XSS (un script que corre en
+   la página puede leer cualquier variable), pero reduce el daño: no persiste entre
    recargas ni pestañas, y no es tan trivial de exfiltrar como un storage completo.
-2. **`lib/api-client.ts`**: un `fetch` central que manda siempre la cookie
-   (`credentials: 'include'`), adosa el `Authorization: Bearer`, y ante un 401 intenta
+2. **`lib/api-client.ts`**: es un `fetch` central que manda siempre la cookie
+   (`credentials: 'include'`), agrega el `Authorization: Bearer`, y ante un 401 intenta
    un refresh y reintenta el request una vez. El refresh es single-flight: como el
    backend rota el refresh token en cada uso, dos refrescos en paralelo harían que el
-   segundo llegue con un token que el primero ya revocó; acá todo el que necesite
-   refrescar espera la misma promesa compartida.
-3. **`auth/auth-context.tsx`**: al montar la app, un único intento de
-   `/auth/refresh` recupera la sesión a partir de la cookie `httpOnly` (el access token
-   en memoria se pierde en cada F5, pero la cookie sobrevive). Con React StrictMode
-   duplicando efectos en desarrollo, y con la posibilidad de que un login manual
-   resuelva antes que ese refresh de arranque, hay una guarda explícita para que un
-   resultado de bootstrap que llega tarde nunca pise una sesión ya establecida por otra
-   vía.
-4. **`auth/ProtectedRoute.tsx`**: la lección central del frontend, esto es UX, no
-   seguridad. Esconde una página y redirige a `/login`, pero cualquiera puede saltarlo
-   con curl, editando el estado en React DevTools, o con JS deshabilitado. Lo que
-   protege de verdad son `requireAuth` y los chequeos de ownership del backend; el
+   segundo llegue con un token que el primero ya revocó, así que dejamos que todo el que
+   necesite refrescar espere la misma promesa compartida.
+3. **`auth/auth-context.tsx`**: al montar la app, hacemos un único intento de
+   `/auth/refresh` para recuperar la sesión a partir de la cookie `httpOnly` (el access
+   token en memoria se pierde en cada F5, pero la cookie sobrevive). Con React
+   StrictMode duplicando efectos en desarrollo, y con la posibilidad de que un login
+   manual resuelva antes que ese refresh de arranque, agregamos una guarda explícita
+   para que un resultado de bootstrap que llega tarde nunca pise una sesión ya
+   establecida por otra vía.
+4. **`auth/ProtectedRoute.tsx`**: acá está la lección central del frontend, esto es UX,
+   no seguridad. Esconde una página y redirige a `/login`, pero cualquiera puede
+   saltarlo con curl, editando el estado en React DevTools, o con JS deshabilitado. Lo
+   que protege de verdad son `requireAuth` y los chequeos de ownership del backend; el
    panel de `/seguridad` lo prueba a propósito saltándose esta UI.
 
 ## Estructura
@@ -96,24 +96,24 @@ muestra el status HTTP y el body tal cual responde el backend:
 5. **Fuerza bruta en el login**: 6 intentos seguidos → 429 + cabeceras `RateLimit-*`
 6. **Mass assignment**: registro con `"role":"admin"` de más → se descarta solo
 
-El punto 5 consume el límite real de `/auth/login` (compartido con el registro y con
-Google): si el punto 6 da 429, es porque acabás de correr el 5. Esperá la ventana,
-reiniciá el backend (el contador vive en memoria), o subí `AUTH_RATE_LIMIT_MAX` en el
-`.env` del backend para la demo.
+Ojo: el punto 5 consume el límite real de `/auth/login` (compartido con el registro y
+con Google), así que si el punto 6 te da 429, es porque acabás de correr el 5. Podés
+esperar la ventana, reiniciar el backend (el contador vive en memoria), o subir
+`AUTH_RATE_LIMIT_MAX` en el `.env` del backend para la demo.
 
 ## Notas de seguridad adicionales
 
 - **`.env` de frontend**: `VITE_API_URL` y `VITE_GOOGLE_CLIENT_ID` pueden tener un
-  default o quedar vacíos sin riesgo: todo lo que empieza con `VITE_` termina dentro
-  del bundle de JS, así que nunca es el lugar para un secreto (contraste con
+  default o quedar vacíos sin riesgo, porque todo lo que empieza con `VITE_` termina
+  dentro del bundle de JS. Por eso nunca es el lugar para un secreto (compará con
   `JWT_SECRET` en el backend, que nunca tiene default).
-- **XSS**: `PostCard`/`CommentList` interpolan el contenido como texto, React lo
-  escapa por default. Probá postear `<script>alert(1)</script>` y confirmá que se ve
-  como texto, no que se ejecuta.
+- **XSS**: `PostCard`/`CommentList` interpolan el contenido como texto, y React lo
+  escapa por default. Podés probar postear `<script>alert(1)</script>` y vas a ver que
+  se muestra como texto, no que se ejecuta.
 - **Validación cliente vs. servidor** (`schemas/*.ts`): son un espejo de
   `backend/domain/*.ts` para dar feedback inmediato en el formulario. La que protege de
-  verdad es la del servidor: mandá un body inválido con curl y vas a ver el 400 igual,
-  sin pasar por acá.
+  verdad es la del servidor: si mandás un body inválido con curl, vas a ver el 400
+  igual, sin pasar por acá.
 - **El ID token de Google nunca se decodifica ni se confía en el cliente**: el frontend
   solo lo reenvía tal cual a `POST /api/auth/google`. Toda la verificación (firma,
   issuer, audience, expiración) pasa en el backend, con `google-auth-library`.

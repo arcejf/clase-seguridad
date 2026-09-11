@@ -4,9 +4,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import * as postsApi from '@/api/posts.api';
+import * as postsService from '@/services/posts';
 import { ApiError } from '@/lib/api-error';
-import { createPostSchema, type CreatePostInput } from '@/schemas/post.schemas';
+import { createPostSchema, type CreatePostInput } from '@/schemas/post';
 import type { PostDTO } from '@/types/api';
 
 export function PostComposer({ onCreated }: { onCreated: (post: PostDTO) => void }) {
@@ -20,7 +20,7 @@ export function PostComposer({ onCreated }: { onCreated: (post: PostDTO) => void
 
   async function onSubmit(input: CreatePostInput) {
     try {
-      const post = await postsApi.createPost(input);
+      const post = await postsService.createPost(input);
       onCreated(post);
       form.reset();
     } catch (err) {
