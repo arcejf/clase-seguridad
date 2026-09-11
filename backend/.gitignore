@@ -1,0 +1,14 @@
+node_modules/
+dist/
+
+# 🔒 El .env real tiene secretos (JWT_SECRET) — nunca va al repo.
+# .env.example sí se commitea, con valores de ejemplo.
+.env
+
+# Base de datos SQLite local — se regenera con `npm run setup`.
+prisma/dev.db
+prisma/dev.db-journal
+*.db
+*.db-journal
+
+*.log

@@ -1,0 +1,99 @@
+// Schema de la base de datos (SQLite, cero setup, se genera con `npm run setup`).
+// Ver el README para por qué SQLite en un proyecto didáctico.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// El campo se llama "passwordHash", nunca "password": el nombre ya
+// documenta que ahí adentro jamás va texto plano. Ver lib/password.ts.
+//
+// passwordHash es opcional porque una cuenta creada con Google (googleId)
+// no tiene contraseña propia: nunca hay nada que hashear en ese caso, y
+// login() ya contempla ese null al comparar contra el hash dummy de timing.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String?
+  googleId     String?  @unique
+  displayName  String
+  bio          String   @default("")
+  createdAt    DateTime @default(now())
+
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+// Se guarda el HASH del refresh token, no el token en sí. Mismo
+// razonamiento que con las contraseñas: si se filtra la BD, lo que ahí
+// está guardado no sirve para autenticarse en nombre de nadie.
+// Es lo único con estado en el servidor, por eso un logout revoca de verdad,
+// cosa que un JWT firmado (sin estado) nunca puede hacer por sí solo.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  likes    Like[]
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("comments")
+}
+
+// La unicidad de un like por usuario la garantiza la propia base de datos
+// (clave primaria compuesta), no un `if` en el código: un `if` tiene
+// condición de carrera bajo dos requests simultáneos; un @@id no.
+model Like {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId])
+  @@map("likes")
+}
